@@ -25,7 +25,8 @@ import cats.implicits._
 
 object CopyFile extends App {
 
-  // copy from IOApp - IOAppPlatform not accessible !
+  // this is a direct copy from IOApp - IOAppPlatform not accessible !
+  // see CopyFileV1WithNoGuard as a simpler v1
   // protected implicit def contextShift: ContextShift[IO] = IOAppPlatform.defaultContextShift
 
   def transmit(origin: InputStream, destination: OutputStream, buffer: Array[Byte], acc: Long): IO[Long] =

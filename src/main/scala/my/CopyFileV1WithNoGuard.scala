@@ -15,15 +15,13 @@
  */
 package my
 
-import java.io.{File, _}
-
+import java.io.{File, FileInputStream, FileOutputStream, InputStream, OutputStream}
 import cats.effect._
-import cats.effect.concurrent.Semaphore
 import cats.implicits._
 
-// same as CopyFile, but with NO Semaphore / guard
+// same as CopyFile, but as V1 with NO Semaphore / guard - ref doc
 
-object CopyFileWithNoGuard extends App {
+object CopyFileV1WithNoGuard extends App {
 
   // loop
   def transmit(origin: InputStream, destination: OutputStream, buffer: Array[Byte], acc: Long): IO[Long] = {
@@ -79,10 +77,17 @@ object CopyFileWithNoGuard extends App {
     } yield (inStream, outStream)
   }
 
-  def inputStreamAuto(f: File): Resource[IO, FileInputStream] =
+  // auto version lacks control on releasing exceptions
+  def inputStreamAuto(f: File): Resource[IO, FileInputStream] = {
+    println("zhale:inputAuto()")
     Resource.fromAutoCloseable(IO(new FileInputStream(f)))
-  def outputStreamAuto(f: File): Resource[IO, FileOutputStream] =
+  }
+
+  def outputStreamAuto(f: File): Resource[IO, FileOutputStream] = {
+    println("zhale:outputAuto()")
     Resource.fromAutoCloseable(IO(new FileOutputStream(f)))
+  }
+
   def inputOutputStreamsAuto(in: File, out: File): Resource[IO, (InputStream, OutputStream)] = {
     println("zhale:Auto()")
     for {
@@ -108,8 +113,7 @@ object CopyFileWithNoGuard extends App {
   val count = copy(orig, dest)
   println(count) // IO$xxx
   println(count.unsafeRunSync()) // 3046; the IO will not execute until / without this
-    for {
-      _     <- IO(println(s"$count bytes copied from ${orig.getPath} to ${dest.getPath}"))
-    } yield ExitCode.Success
-
+  for {
+    _ <- IO(println(s"$count bytes copied from ${orig.getPath} to ${dest.getPath}")) // this will NOT print
+  } yield ExitCode.Success
 }
